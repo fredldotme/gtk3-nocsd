@@ -556,6 +556,13 @@ static GtkStyleProvider *get_custom_css_provider ()
       "  border-top-left-radius: 0;\n"
       "  border-top-right-radius: 0;\n"
       "}\n";
+    static int title_skipped = 0;
+
+    const char* env_show_header = getenv("GTK3NOCSD_SHOW_HEADER");
+    if (env_show_header && !strncmp(env_show_header, "1", 2) && !title_skipped) {
+        custom_css += 28; // skip CSS rule that hides title
+        title_skipped = 1;
+    }
 
     if (G_UNLIKELY (provider == NULL)) {
         GtkCssProvider *new_provider;

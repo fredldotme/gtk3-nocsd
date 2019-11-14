@@ -74,6 +74,14 @@ This is how the gtk3 windows look like before and after using
 
 * Hooray! GTK+ 3 client-side decorations are disabled now.
 
+# Application title:
+
+By default gtk3-nocsd will hide Gnome applications title.
+
+If you don't want that title to be hidden set enviroment variable `GTK3NOCSD_SHOW_HEADER` to `1`.
+
+Example: `env GTK3NOCSD_SHOW_HEADER=1 gtk3-nocsd gnome-mahjongg`.
+
 # Distribution packages:
 
 gtk3-nocsd is packaged in Debian's unstable and testing distributions,
