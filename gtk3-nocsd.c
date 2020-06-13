@@ -649,6 +649,14 @@ extern void gtk_window_set_titlebar (GtkWindow *window, GtkWidget *titlebar) {
             g_signal_connect (titlebar, "notify::title",
                         G_CALLBACK (private_info.on_titlebar_title_notify), window);
             private_info.on_titlebar_title_notify (GTK_HEADER_BAR (titlebar), NULL, window);
+
+            /* Hide HeaderBar if it has 0 children */
+            GList *children = gtk_container_get_children(GTK_CONTAINER(titlebar));
+            guint length = g_list_length(children);
+            g_list_free(children);
+            if (length == 0) {
+                gtk_widget_hide(titlebar);
+            }
         }
 
         gtk_style_context_add_class (gtk_widget_get_style_context (titlebar),
