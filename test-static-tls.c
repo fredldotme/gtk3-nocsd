@@ -30,7 +30,7 @@ static void *doit(void *dummy)
   char buf2[] = "testlib_dummy_get__";      /* replace char @ index 18 (_) */
   void *hdl;
   int *(*fn)();
-  int c;
+  size_t c;
   int lastlib = -1;
   int *ptr;
 
