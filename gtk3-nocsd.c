@@ -542,7 +542,7 @@ static GtkStyleProvider *get_custom_css_provider ()
      * <https://www.w3.org/TR/selectors/#specificity> for details.
      */
     static const char *custom_css =
-      "label.title {\n"
+      "label.title:only-child {\n"
       "opacity: 0;\n"
       "}\n"
       "window > .titlebar:not(headerbar) {\n"
@@ -560,7 +560,7 @@ static GtkStyleProvider *get_custom_css_provider ()
 
     const char* env_show_header = getenv("GTK3NOCSD_SHOW_HEADER");
     if (env_show_header && !strncmp(env_show_header, "1", 2) && !title_skipped) {
-        custom_css += 28; // skip CSS rule that hides title
+        custom_css += 39; // skip CSS rule that hides title
         title_skipped = 1;
     }
 
