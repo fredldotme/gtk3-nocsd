@@ -275,6 +275,7 @@ RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_style_provider_get_type, GType, (), 
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_hide, void, (GtkWidget *widget), (widget))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_destroy, void, (GtkWidget *widget), (widget))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_get_mapped, gboolean, (GtkWidget *widget), (widget))
+RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_get_name, const char*, (GtkWidget *widget), (widget))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_get_realized, gboolean, (GtkWidget *widget), (widget))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_get_style_context, GtkStyleContext *, (GtkWidget *widget), (widget))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_map, void, (GtkWidget *widget), (widget))
@@ -347,6 +348,7 @@ RUNTIME_IMPORT_FUNCTION(0, GIREPOSITORY_LIBRARY, g_function_info_prep_invoker, g
 #define gtk_widget_hide                                  rtlookup_gtk_widget_hide
 #define gtk_widget_destroy                               rtlookup_gtk_widget_destroy
 #define gtk_widget_get_mapped                            rtlookup_gtk_widget_get_mapped
+#define gtk_widget_get_name                              rtlookup_gtk_widget_get_name
 #define gtk_widget_get_realized                          rtlookup_gtk_widget_get_realized
 #define gtk_widget_get_style_context                     rtlookup_gtk_widget_get_style_context
 #define gtk_widget_map                                   rtlookup_gtk_widget_map
@@ -668,8 +670,9 @@ extern void gtk_window_set_titlebar (GtkWindow *window, GtkWidget *titlebar) {
             /* Hide HeaderBar if it has 0 children */
             GList *children = gtk_container_get_children(GTK_CONTAINER(titlebar));
             guint length = g_list_length(children);
+            const gchar* name = gtk_widget_get_name(titlebar);
             g_list_free(children);
-            if (length == 0) {
+            if (length == 0 && strcmp(name, "GtkHeaderBar") == 0) {
                 gtk_widget_hide(titlebar);
             }
         }
