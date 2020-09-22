@@ -253,8 +253,6 @@ try_gtk2_version:
         return orig_func arg_use_list; \
     }
 
-RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_container_get_type, GType, (), ())
-RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_container_get_children, GList *, (GtkContainer *container), (container))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_css_provider_new, GtkCssProvider *, (), ())
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_css_provider_load_from_data, void, (GtkCssProvider *provider, const gchar *data, gssize length, GError **error), (provider, data, length, error))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_window_new, GtkWidget *, (GtkWindowType type), (type))
@@ -272,10 +270,8 @@ RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_style_context_add_class, void, (GtkS
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_style_context_remove_class, void, (GtkStyleContext *context, const gchar *class_name), (context, class_name))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_style_context_add_provider_for_screen, void, (GdkScreen *screen, GtkStyleProvider *provider, guint priority), (screen, provider, priority))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_style_provider_get_type, GType, (), ())
-RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_hide, void, (GtkWidget *widget), (widget))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_destroy, void, (GtkWidget *widget), (widget))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_get_mapped, gboolean, (GtkWidget *widget), (widget))
-RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_get_name, const char*, (GtkWidget *widget), (widget))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_get_realized, gboolean, (GtkWidget *widget), (widget))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_get_style_context, GtkStyleContext *, (GtkWidget *widget), (widget))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_map, void, (GtkWidget *widget), (widget))
@@ -288,8 +284,6 @@ RUNTIME_IMPORT_FUNCTION(0, GDK_LIBRARY, gdk_screen_get_default, GdkScreen *, (),
 RUNTIME_IMPORT_FUNCTION(0, GDK_LIBRARY, gdk_window_get_user_data, void, (GdkWindow *window, gpointer *data), (window, data))
 RUNTIME_IMPORT_FUNCTION(1, GDK_LIBRARY, gdk_screen_is_composited, gboolean, (GdkScreen *screen), (screen))
 RUNTIME_IMPORT_FUNCTION(1, GDK_LIBRARY, gdk_window_set_decorations, void, (GdkWindow *window, GdkWMDecoration decorations), (window, decorations))
-RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_list_free, void, (GList *list), (list))
-RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_list_length, guint, (), ())
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_object_get_data, gpointer, (GObject *object, const gchar *key), (object, key))
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_object_set_data, void, (GObject *object, const gchar *key, gpointer data), (object, key, data))
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_object_ref, gpointer, (gpointer object), (object))
@@ -326,8 +320,6 @@ RUNTIME_IMPORT_FUNCTION(0, GIREPOSITORY_LIBRARY, g_function_info_prep_invoker, g
 /* All methods that we want to overwrite are named orig_, all methods
  * that we just want to call (either directly or indirectrly)
  */
-#define gtk_container_get_type                           rtlookup_gtk_container_get_type
-#define gtk_container_get_children                       rtlookup_gtk_container_get_children
 #define gtk_css_provider_new                             rtlookup_gtk_css_provider_new
 #define gtk_css_provider_load_from_data                  rtlookup_gtk_css_provider_load_from_data
 #define gtk_window_new                                   rtlookup_gtk_window_new
@@ -345,10 +337,8 @@ RUNTIME_IMPORT_FUNCTION(0, GIREPOSITORY_LIBRARY, g_function_info_prep_invoker, g
 #define gtk_style_context_remove_class                   rtlookup_gtk_style_context_remove_class
 #define gtk_style_context_add_provider_for_screen        rtlookup_gtk_style_context_add_provider_for_screen
 #define gtk_style_provider_get_type                      rtlookup_gtk_style_provider_get_type
-#define gtk_widget_hide                                  rtlookup_gtk_widget_hide
 #define gtk_widget_destroy                               rtlookup_gtk_widget_destroy
 #define gtk_widget_get_mapped                            rtlookup_gtk_widget_get_mapped
-#define gtk_widget_get_name                              rtlookup_gtk_widget_get_name
 #define gtk_widget_get_realized                          rtlookup_gtk_widget_get_realized
 #define gtk_widget_get_style_context                     rtlookup_gtk_widget_get_style_context
 #define gtk_widget_map                                   rtlookup_gtk_widget_map
@@ -360,7 +350,6 @@ RUNTIME_IMPORT_FUNCTION(0, GIREPOSITORY_LIBRARY, g_function_info_prep_invoker, g
 #define orig_gdk_screen_is_composited                    rtlookup_gdk_screen_is_composited
 #define orig_gdk_window_set_decorations                  rtlookup_gdk_window_set_decorations
 #define g_list_free                                      rtlookup_g_list_free
-#define g_list_length                                    rtlookup_g_list_length
 #define g_object_get_data                                rtlookup_g_object_get_data
 #define g_object_set_data                                rtlookup_g_object_set_data
 #define g_type_check_class_cast                          rtlookup_g_type_check_class_cast
@@ -666,15 +655,6 @@ extern void gtk_window_set_titlebar (GtkWindow *window, GtkWidget *titlebar) {
             g_signal_connect (titlebar, "notify::title",
                         G_CALLBACK (private_info.on_titlebar_title_notify), window);
             private_info.on_titlebar_title_notify (GTK_HEADER_BAR (titlebar), NULL, window);
-
-            /* Hide HeaderBar if it has 0 children */
-            GList *children = gtk_container_get_children(GTK_CONTAINER(titlebar));
-            guint length = g_list_length(children);
-            const gchar* name = gtk_widget_get_name(titlebar);
-            g_list_free(children);
-            if (length == 0 && strcmp(name, "GtkHeaderBar") == 0) {
-                gtk_widget_hide(titlebar);
-            }
         }
 
         gtk_style_context_add_class (gtk_widget_get_style_context (titlebar),
