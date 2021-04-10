@@ -271,10 +271,12 @@ RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_window_set_titlebar, void, (GtkWindo
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_header_bar_set_show_close_button, void, (GtkHeaderBar *bar, gboolean setting), (bar, setting))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_header_bar_set_decoration_layout, void, (GtkHeaderBar *bar, const gchar *layout), (bar, layout))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_header_bar_get_decoration_layout, const gchar *, (GtkHeaderBar *bar), (bar))
+RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_header_bar_get_custom_title, GtkWidget *, (GtkHeaderBar *bar), (bar))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_style_context_add_class, void, (GtkStyleContext *context, const gchar *class_name), (context, class_name))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_style_context_remove_class, void, (GtkStyleContext *context, const gchar *class_name), (context, class_name))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_style_context_add_provider_for_screen, void, (GdkScreen *screen, GtkStyleProvider *provider, guint priority), (screen, provider, priority))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_style_provider_get_type, GType, (), ())
+RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_hide, void, (GtkWidget *widget), (widget))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_destroy, void, (GtkWidget *widget), (widget))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_get_mapped, gboolean, (GtkWidget *widget), (widget))
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_widget_get_realized, gboolean, (GtkWidget *widget), (widget))
@@ -338,10 +340,12 @@ RUNTIME_IMPORT_FUNCTION(0, GIREPOSITORY_LIBRARY, g_function_info_prep_invoker, g
 #define orig_gtk_header_bar_set_show_close_button        rtlookup_gtk_header_bar_set_show_close_button
 #define orig_gtk_header_bar_set_decoration_layout        rtlookup_gtk_header_bar_set_decoration_layout
 #define orig_gtk_header_bar_get_decoration_layout        rtlookup_gtk_header_bar_get_decoration_layout
+#define gtk_header_bar_get_custom_title                  rtlookup_gtk_header_bar_get_custom_title
 #define gtk_style_context_add_class                      rtlookup_gtk_style_context_add_class
 #define gtk_style_context_remove_class                   rtlookup_gtk_style_context_remove_class
 #define gtk_style_context_add_provider_for_screen        rtlookup_gtk_style_context_add_provider_for_screen
 #define gtk_style_provider_get_type                      rtlookup_gtk_style_provider_get_type
+#define gtk_widget_hide                                  rtlookup_gtk_widget_hide
 #define gtk_widget_destroy                               rtlookup_gtk_widget_destroy
 #define gtk_widget_get_mapped                            rtlookup_gtk_widget_get_mapped
 #define gtk_widget_get_realized                          rtlookup_gtk_widget_get_realized
@@ -660,6 +664,12 @@ extern void gtk_window_set_titlebar (GtkWindow *window, GtkWidget *titlebar) {
             g_signal_connect (titlebar, "notify::title",
                         G_CALLBACK (private_info.on_titlebar_title_notify), window);
             private_info.on_titlebar_title_notify (GTK_HEADER_BAR (titlebar), NULL, window);
+
+            /* Hiding GtkHeaderBar when custom title wasn't set */
+            const GtkWidget* custom = gtk_header_bar_get_custom_title(GTK_HEADER_BAR (titlebar));
+            if (NULL == custom) {
+                gtk_widget_hide(GTK_WIDGET (titlebar));
+            }
         }
 
         gtk_style_context_add_class (gtk_widget_get_style_context (titlebar),
