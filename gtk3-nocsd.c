@@ -34,6 +34,7 @@
 
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
+#include <handy.h>
 
 #include <girffi.h>
 
@@ -531,9 +532,18 @@ typedef struct gtk_header_bar_private_info_t {
 
 static GType gtk_window_type = -1;
 static GType gtk_header_bar_type = -1;
+static GType hdy_header_bar_type = -1;
 
 static gtk_window_private_info_t gtk_window_private_info ();
 static gtk_header_bar_private_info_t gtk_header_bar_private_info ();
+
+typedef struct hdy_header_bar_private_info_t {
+    gsize decoration_layout_offset;
+    update_window_buttons_t update_window_buttons;
+    window_state_changed_t window_state_changed;
+} hdy_header_bar_private_info_t;
+
+static hdy_header_bar_private_info_t hdy_header_bar_private_info ();
 
 static GtkStyleProvider *get_custom_css_provider ()
 {
@@ -766,6 +776,32 @@ static void _gtk_header_bar_update_window_buttons (GtkHeaderBar *bar)
         *decoration_layout_ptr = orig_layout;
     } else {
         TLSD->fake_global_decoration_layout = 0;
+    }
+}
+
+static void _hdy_header_bar_update_window_buttons (HdyHeaderBar *bar)
+{
+    hdy_header_bar_private_info_t info = hdy_header_bar_private_info ();
+    char *priv = G_TYPE_INSTANCE_GET_PRIVATE (bar, gtk_header_bar_type, char);
+    gchar **decoration_layout_ptr = NULL;
+    gchar *orig_layout = NULL;
+    gchar new_layout[256];
+    int r;
+
+    if (info.decoration_layout_offset == (gsize) -1 || info.decoration_layout_offset == (gsize) -2 || !priv) {
+        return;
+    }
+
+    /* We shouldn't hit this case, but check nevertheless. */
+    if (!is_compatible_gtk_version() || !are_csd_disabled()) {
+        info.update_window_buttons (bar);
+        return;
+    }
+
+    decoration_layout_ptr = (gchar **) &priv[info.decoration_layout_offset];
+    if (*decoration_layout_ptr) {
+        orig_layout = *decoration_layout_ptr;
+        // TODO: ...
     }
 }
 
@@ -1048,6 +1084,19 @@ static void fake_gtk_header_bar_hierarchy_changed (GtkWidget *widget, GtkWidget 
     _gtk_header_bar_update_window_buttons (bar);
 }
 
+static gtk_header_bar_hierarchy_changed_t orig_hdy_header_bar_hierarchy_changed = NULL;
+static void fake_hdy_header_bar_hierarchy_changed (GtkWidget *widget, GtkWidget *previous_toplevel)
+{
+    HdyHeaderBar *bar = HDY_HEADER_BAR (widget);
+
+    orig_hdy_header_bar_hierarchy_changed (widget, previous_toplevel);
+
+    if (G_UNLIKELY (TLSD->in_info_collect))
+        return;
+
+    _hdy_header_bar_update_window_buttons (bar);
+}
+
 static GClassInitFunc orig_gtk_header_bar_class_init = NULL;
 
 static void fake_gtk_header_bar_class_init (GtkWindowClass *klass, gpointer data) {
@@ -1065,6 +1114,17 @@ static void fake_gtk_header_bar_class_init (GtkWindowClass *klass, gpointer data
         widget_class->realize = fake_gtk_header_bar_realize;
         widget_class->unrealize = fake_gtk_header_bar_unrealize;
         widget_class->hierarchy_changed = fake_gtk_header_bar_hierarchy_changed;
+    }
+}
+
+static GClassInitFunc orig_hdy_header_bar_class_init = NULL;
+
+static void fake_hdy_header_bar_class_init (GtkWindowClass *klass, gpointer data) {
+    orig_hdy_header_bar_class_init(klass, data);
+    GtkWidgetClass* widget_class = GTK_WIDGET_CLASS (klass);
+    if (widget_class) {
+        orig_hdy_header_bar_hierarchy_changed = widget_class->hierarchy_changed;
+        widget_class->hierarchy_changed = fake_hdy_header_bar_hierarchy_changed;
     }
 }
 
@@ -1129,6 +1189,18 @@ GType g_type_register_static_simple (GType parent_type, const gchar *type_name, 
             if(is_compatible_gtk_version() && are_csd_disabled()) {
                 class_init = (GClassInitFunc)fake_gtk_header_bar_class_init;
                 save_type = &gtk_header_bar_type;
+                goto out;
+            }
+        }
+    }
+
+    if (!orig_hdy_header_bar_class_init) { // HdyHeaderBar::constructor is not overriden
+        if(type_name && G_UNLIKELY(strcmp(type_name, "HdyHeaderBar") == 0)) {
+            // override HdyHeaderBarClass
+            orig_hdy_header_bar_class_init = class_init;
+            if(is_compatible_gtk_version() && are_csd_disabled()) {
+                class_init = (GClassInitFunc)fake_hdy_header_bar_class_init;
+                save_type = &hdy_header_bar_type;
                 goto out;
             }
         }
@@ -1217,6 +1289,8 @@ static gsize gtk_window_private_size = 0;
 static gint gtk_window_private_offset = 0;
 static gsize gtk_header_bar_private_size = 0;
 static gint gtk_header_bar_private_offset = 0;
+static gsize hdy_header_bar_private_size = 0;
+static gint hdy_header_bar_private_offset = 0;
 gint g_type_add_instance_private (GType class_type, gsize private_size)
 {
     if (G_UNLIKELY (class_type == gtk_window_type && gtk_window_private_size == 0)) {
@@ -1227,6 +1301,10 @@ gint g_type_add_instance_private (GType class_type, gsize private_size)
         gtk_header_bar_private_size = private_size;
         gtk_header_bar_private_offset = orig_g_type_add_instance_private (class_type, private_size);
         return gtk_window_private_offset;
+    } else if (G_UNLIKELY (class_type == hdy_header_bar_type && hdy_header_bar_private_size == 0)) {
+        hdy_header_bar_private_size = private_size;
+        hdy_header_bar_private_offset = orig_g_type_add_instance_private (class_type, private_size);
+        return hdy_header_bar_private_offset;
     }
     return orig_g_type_add_instance_private (class_type, private_size);
 }
@@ -1336,6 +1414,90 @@ static gtk_window_private_info_t gtk_window_private_info ()
 
             info.on_titlebar_title_notify = (on_titlebar_title_notify_t) TLSD->signal_capture_callback;
             info.title_box_offset = offset;
+out:
+            if (dummy_window) gtk_widget_destroy (GTK_WIDGET (dummy_window));
+            else if (dummy_bar) gtk_widget_destroy (GTK_WIDGET (dummy_bar));
+
+            TLSD->in_info_collect = 0;
+        }
+    }
+    return info;
+}
+
+static hdy_header_bar_private_info_t hdy_header_bar_private_info ()
+{
+    static volatile hdy_header_bar_private_info_t info = { (gsize) -1, NULL, NULL };
+    if (G_UNLIKELY (info.decoration_layout_offset == (gsize) -1)) {
+        if (hdy_header_bar_private_size != 0) {
+            GtkWindow *dummy_window = GTK_WINDOW (gtk_window_new (GTK_WINDOW_TOPLEVEL));
+            HdyHeaderBar *dummy_bar = HDY_HEADER_BAR (hdy_header_bar_new ());
+            void *header_bar_priv = NULL;
+            const gchar *ptr = NULL;
+            const gchar **ptr_in_priv;
+            int offset = -1;
+            gpointer ws_cb = NULL;
+
+            /* We're collecting information, so make sure all hacks
+             * are NOOPS. */
+            TLSD->in_info_collect = 1;
+
+            if (!dummy_bar || !dummy_window) {
+                g_warning ("libgtk3-nocsd: couldn't create dummy object (HdyHeaderBar) to determine this Gtk's runtime data structure layout");
+                goto out;
+            }
+
+            /* add it to our dummy window (we need a window here because
+             * we want to realize the header bar, and that we can only
+             * do if it's attached to a top-level window) */
+            TLSD->signal_capture_callback = NULL;
+            TLSD->signal_capture_handler = 1;
+            TLSD->signal_capture_name = "window-state-event";
+            TLSD->signal_capture_instance = dummy_window;
+            TLSD->signal_capture_data = NULL;
+            orig_gtk_window_set_titlebar (dummy_window, dummy_bar);
+            TLSD->signal_capture_handler = 0;
+            TLSD->signal_capture_instance = NULL;
+            TLSD->signal_capture_name = NULL;
+            ws_cb = TLSD->signal_capture_callback;
+
+            header_bar_priv = G_TYPE_INSTANCE_GET_PRIVATE (dummy_bar, hdy_header_bar_type, void);
+
+            hdy_header_bar_set_decoration_layout (dummy_bar, "menu:close");
+            ptr = hdy_header_bar_get_decoration_layout (dummy_bar);
+            offset = find_unique_pointer_in_region (header_bar_priv, hdy_header_bar_private_size, ptr);
+            if (offset < 0) {
+                g_warning ("libgtk3-nocsd: error trying to determine this Gtk's runtime data structure layout: HdyHeaderBar private structure doesn't contain a pointer to decoration_layout after setting it (error type %d)", -offset);
+                goto out;
+            }
+
+            /* We now verify that the pointer is NULL */
+            hdy_header_bar_set_decoration_layout (dummy_bar, NULL);
+            ptr_in_priv = (const gchar **) &((char *)header_bar_priv)[offset];
+            if (*ptr_in_priv != NULL) {
+                g_warning ("libgtk3-nocsd: error trying to determine this Gtk's runtime data structure layout: HdyHeaderBar's priv->decoration_layout pointer position sanity check failed (got pointer %p instead of NULL)", *ptr_in_priv);
+                goto out;
+            }
+
+            /* realize the widget to capture the
+             * _gtk_header_bar_update_window_buttons callback */
+            TLSD->signal_capture_callback = NULL;
+            TLSD->signal_capture_handler = 1;
+            TLSD->signal_capture_name = "notify::gtk-decoration-layout";
+            TLSD->signal_capture_instance = NULL;
+            TLSD->signal_capture_data = dummy_bar;
+            gtk_widget_realize (GTK_WIDGET (dummy_bar));
+            TLSD->signal_capture_handler = 0;
+            TLSD->signal_capture_data = NULL;
+            TLSD->signal_capture_name = NULL;
+
+            if (TLSD->signal_capture_callback == NULL) {
+                g_warning ("libgtk3-nocsd: error trying to determine this Gtk's callback routine for HdyHeaderBar's button update");
+                goto out;
+            }
+
+            info.decoration_layout_offset = offset;
+            info.update_window_buttons = (update_window_buttons_t) TLSD->signal_capture_callback;
+            info.window_state_changed = (window_state_changed_t) ws_cb;
 out:
             if (dummy_window) gtk_widget_destroy (GTK_WIDGET (dummy_window));
             else if (dummy_bar) gtk_widget_destroy (GTK_WIDGET (dummy_bar));

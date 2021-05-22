@@ -1,6 +1,6 @@
 PKG_CONFIG ?= pkg-config
 CFLAGS ?= -O2 -g
-override CFLAGS += $(shell ${PKG_CONFIG} --cflags gtk+-3.0) $(shell ${PKG_CONFIG} --cflags gobject-introspection-1.0) -pthread -Wall -Wextra -Wno-unused-parameter
+override CFLAGS += $(shell ${PKG_CONFIG} --cflags gtk+-3.0) $(shell ${PKG_CONFIG} --cflags gobject-introspection-1.0) $(shell ${PKG_CONFIG} --cflags libhandy-1) -pthread -Wall -Wextra -Wno-unused-parameter
 CFLAGS_LIB = $(filter-out -fPIE -fpie -pie,$(CFLAGS)) -fPIC
 LDFLAGS_LIB = $(filter-out -fPIE -fpie -pie,$(LDFLAGS)) -fPIC
 
