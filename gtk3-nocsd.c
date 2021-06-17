@@ -409,7 +409,7 @@ RUNTIME_IMPORT_FUNCTION(0, HANDY_LIBRARY, hdy_header_bar_set_decoration_layout, 
 #define gtk_widget_get_toplevel                          rtlookup_gtk_widget_get_toplevel
 #define g_assertion_message_expr                         rtlookup_g_assertion_message_expr
 #define orig_g_function_info_prep_invoker                rtlookup_g_function_info_prep_invoker
-#define hdy_header_bar_set_decoration_layout             rtlookup_hdy_header_bar_set_decoration_layout
+#define orig_hdy_header_bar_set_decoration_layout        rtlookup_hdy_header_bar_set_decoration_layout
 
 GTypeInstance* g_type_check_instance_cast(GTypeInstance *instance, GType iface_type) {
     return rtlookup_g_type_check_instance_cast(instance, iface_type);
@@ -804,7 +804,9 @@ static void _hdy_header_bar_update_window_buttons (HdyHeaderBar *bar)
         return;
     }
 
-    hdy_header_bar_set_decoration_layout(bar, "");
+//     const gchar* layout = hdy_header_bar_get_decoration_layout(bar);
+//     fprintf(stderr, "_hdy_header_bar_update_window_buttons := %s\n", layout);
+//     hdy_header_bar_set_decoration_layout(bar, "");
 }
 
 static gboolean _gtk_header_bar_window_state_changed (GtkWidget *widget, GdkEventWindowState *event, gpointer data)
@@ -918,6 +920,17 @@ extern void gtk_header_bar_set_decoration_layout (GtkHeaderBar *bar, const gchar
     if(is_compatible_gtk_version() && are_csd_disabled() && is_gtk_version_larger_or_equal(3, 12, 0)) {
         _gtk_header_bar_update_window_buttons (bar);
     }
+}
+
+extern void hdy_header_bar_set_decoration_layout (HdyHeaderBar *bar, const gchar *layout)
+{
+    char* new_layout = (char *) layout;
+    if (layout != NULL && strlen(layout) > 1) {
+        gchar layout_buf[256];
+        _remove_buttons_from_layout(layout_buf, layout);
+        new_layout = layout_buf;
+    }
+    orig_hdy_header_bar_set_decoration_layout (bar, new_layout);
 }
 
 extern gboolean gdk_screen_is_composited (GdkScreen *screen) {
