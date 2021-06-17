@@ -871,6 +871,11 @@ extern void gtk_header_bar_set_decoration_layout (GtkHeaderBar *bar, const gchar
     }
 }
 
+extern gboolean gtk_window_get_decorated (GtkWindow *window)
+{
+    return FALSE;
+}
+
 extern gboolean gdk_screen_is_composited (GdkScreen *screen) {
     /* With Gtk+3 3.16.1+ we reimplement gtk_window_set_titlebar ourselves, hence
      * we don't want to re-use the compositing hack, especially since it causes
