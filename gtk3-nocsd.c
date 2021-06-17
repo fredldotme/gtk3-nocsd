@@ -925,6 +925,11 @@ extern void gtk_header_bar_set_decoration_layout (GtkHeaderBar *bar, const gchar
     }
 }
 
+extern gboolean gtk_window_get_decorated (GtkWindow *window)
+{
+    return FALSE;
+}
+
 extern void hdy_header_bar_set_decoration_layout (HdyHeaderBar *bar, const gchar *layout)
 {
     char* new_layout = (char *) layout;
