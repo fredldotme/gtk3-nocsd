@@ -335,7 +335,8 @@ RUNTIME_IMPORT_FUNCTION(0, GLIB_LIBRARY, g_strsplit, gchar **, (const gchar *str
 RUNTIME_IMPORT_FUNCTION(0, GLIB_LIBRARY, g_assertion_message_expr, void, (const char *domain, const char *file, int line, const char *func, const char *expr), (domain, file, line, func, expr))
 RUNTIME_IMPORT_FUNCTION(0, GIREPOSITORY_LIBRARY, g_function_info_prep_invoker, gboolean, (GIFunctionInfo *info, GIFunctionInvoker *invoker, GError **error), (info, invoker, error))
 RUNTIME_IMPORT_FUNCTION(0, HANDY_LIBRARY, hdy_header_bar_get_type, GType, (), ())
-RUNTIME_IMPORT_FUNCTION(0, HANDY_LIBRARY, hdy_header_bar_set_decoration_layout, void, (void *bar, const gchar *layout), (bar, layout))
+RUNTIME_IMPORT_FUNCTION(0, HANDY_LIBRARY, hdy_header_bar_get_decoration_layout, const gchar *, (HdyHeaderBar *bar), (bar))
+RUNTIME_IMPORT_FUNCTION(0, HANDY_LIBRARY, hdy_header_bar_set_decoration_layout, void, (HdyHeaderBar *bar, const gchar *layout), (bar, layout))
 
 /* All methods that we want to overwrite are named orig_, all methods
  * that we just want to call (either directly or indirectrly)
@@ -409,6 +410,7 @@ RUNTIME_IMPORT_FUNCTION(0, HANDY_LIBRARY, hdy_header_bar_set_decoration_layout, 
 #define gtk_widget_get_toplevel                          rtlookup_gtk_widget_get_toplevel
 #define g_assertion_message_expr                         rtlookup_g_assertion_message_expr
 #define orig_g_function_info_prep_invoker                rtlookup_g_function_info_prep_invoker
+#define hdy_header_bar_get_decoration_layout             rtlookup_hdy_header_bar_get_decoration_layout
 #define orig_hdy_header_bar_set_decoration_layout        rtlookup_hdy_header_bar_set_decoration_layout
 
 GTypeInstance* g_type_check_instance_cast(GTypeInstance *instance, GType iface_type) {
@@ -804,9 +806,10 @@ static void _hdy_header_bar_update_window_buttons (HdyHeaderBar *bar)
         return;
     }
 
-//     const gchar* layout = hdy_header_bar_get_decoration_layout(bar);
-//     fprintf(stderr, "_hdy_header_bar_update_window_buttons := %s\n", layout);
-//     hdy_header_bar_set_decoration_layout(bar, "");
+    const gchar* layout = hdy_header_bar_get_decoration_layout(bar);
+    if (layout == NULL) {
+        hdy_header_bar_set_decoration_layout(bar, "");
+    }
 }
 
 static gboolean _gtk_header_bar_window_state_changed (GtkWidget *widget, GdkEventWindowState *event, gpointer data)
