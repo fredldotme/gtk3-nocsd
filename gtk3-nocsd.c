@@ -34,6 +34,7 @@
 
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
+
 #include <handy.h>
 
 #include <girffi.h>
@@ -64,6 +65,7 @@ enum {
     GOBJECT_LIBRARY,
     GLIB_LIBRARY,
     GIREPOSITORY_LIBRARY,
+    HANDY_LIBRARY,
     NUM_LIBRARIES
 };
 
@@ -91,12 +93,17 @@ enum {
 #define GIREPOSITORY_LIBRARY_SONAME "libgirepository-1.0.so.1"
 #endif
 
+#ifndef HANDY_LIBRARY_SONAME
+#define HANDY_LIBRARY_SONAME "libhandy-1.so.0"
+#endif
+
 static const char *library_sonames[NUM_LIBRARIES] = {
     GTK_LIBRARY_SONAME,
     GDK_LIBRARY_SONAME,
     GOBJECT_LIBRARY_SONAME,
     GLIB_LIBRARY_SONAME,
-    GIREPOSITORY_LIBRARY_SONAME
+    GIREPOSITORY_LIBRARY_SONAME,
+    HANDY_LIBRARY_SONAME
 };
 
 static const char *library_sonames_v2[NUM_LIBRARIES] = {
@@ -104,10 +111,13 @@ static const char *library_sonames_v2[NUM_LIBRARIES] = {
     GDK_LIBRARY_SONAME_V2,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 
 static void * volatile library_handles[NUM_LIBRARIES * 2] = {
+    NULL,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -324,6 +334,7 @@ RUNTIME_IMPORT_FUNCTION(0, GLIB_LIBRARY, g_strlcpy, gsize, (gchar *dest, const g
 RUNTIME_IMPORT_FUNCTION(0, GLIB_LIBRARY, g_strsplit, gchar **, (const gchar *string, const gchar *delimiter, gint max_tokens), (string, delimiter, max_tokens))
 RUNTIME_IMPORT_FUNCTION(0, GLIB_LIBRARY, g_assertion_message_expr, void, (const char *domain, const char *file, int line, const char *func, const char *expr), (domain, file, line, func, expr))
 RUNTIME_IMPORT_FUNCTION(0, GIREPOSITORY_LIBRARY, g_function_info_prep_invoker, gboolean, (GIFunctionInfo *info, GIFunctionInvoker *invoker, GError **error), (info, invoker, error))
+RUNTIME_IMPORT_FUNCTION(0, HANDY_LIBRARY, hdy_header_bar_set_decoration_layout, void, (HdyHeaderBar *bar, const gchar *layout), (bar, layout))
 
 /* All methods that we want to overwrite are named orig_, all methods
  * that we just want to call (either directly or indirectrly)
@@ -398,6 +409,7 @@ RUNTIME_IMPORT_FUNCTION(0, GIREPOSITORY_LIBRARY, g_function_info_prep_invoker, g
 #define gtk_widget_get_toplevel                          rtlookup_gtk_widget_get_toplevel
 #define g_assertion_message_expr                         rtlookup_g_assertion_message_expr
 #define orig_g_function_info_prep_invoker                rtlookup_g_function_info_prep_invoker
+#define hdy_header_bar_set_decoration_layout             rtlookup_hdy_header_bar_set_decoration_layout
 
 /* Forwarding of varadic functions is tricky. */
 static void static_g_log(const gchar *log_domain, GLogLevelFlags log_level, const gchar *format, ...)
@@ -1069,7 +1081,7 @@ static void fake_gtk_header_bar_hierarchy_changed (GtkWidget *widget, GtkWidget 
 static gtk_header_bar_hierarchy_changed_t orig_hdy_header_bar_hierarchy_changed = NULL;
 static void fake_hdy_header_bar_hierarchy_changed (GtkWidget *widget, GtkWidget *previous_toplevel)
 {
-    HdyHeaderBar *bar = HDY_HEADER_BAR (widget);
+    HdyHeaderBar *bar = widget;
 
     orig_hdy_header_bar_hierarchy_changed (widget, previous_toplevel);
 
