@@ -20,6 +20,9 @@ clean:
 libgtk3-nocsd.so.0: gtk3-nocsd.o
 	$(CC) -ldl -shared $(CFLAGS_LIB) $(LDFLAGS_LIB) -Wl,-soname,libgtk3-nocsd.so.0 -o $@ $^ $(LDLIBS)
 
+cpp:
+	cpp $(CPPFLAGS) $(CFLAGS_LIB) gtk3-nocsd.c
+
 gtk3-nocsd.o: gtk3-nocsd.c
 	$(CC) $(CPPFLAGS) $(CFLAGS_LIB) -o $@ -c $<
 

@@ -334,7 +334,8 @@ RUNTIME_IMPORT_FUNCTION(0, GLIB_LIBRARY, g_strlcpy, gsize, (gchar *dest, const g
 RUNTIME_IMPORT_FUNCTION(0, GLIB_LIBRARY, g_strsplit, gchar **, (const gchar *string, const gchar *delimiter, gint max_tokens), (string, delimiter, max_tokens))
 RUNTIME_IMPORT_FUNCTION(0, GLIB_LIBRARY, g_assertion_message_expr, void, (const char *domain, const char *file, int line, const char *func, const char *expr), (domain, file, line, func, expr))
 RUNTIME_IMPORT_FUNCTION(0, GIREPOSITORY_LIBRARY, g_function_info_prep_invoker, gboolean, (GIFunctionInfo *info, GIFunctionInvoker *invoker, GError **error), (info, invoker, error))
-RUNTIME_IMPORT_FUNCTION(0, HANDY_LIBRARY, hdy_header_bar_set_decoration_layout, void, (HdyHeaderBar *bar, const gchar *layout), (bar, layout))
+RUNTIME_IMPORT_FUNCTION(0, HANDY_LIBRARY, hdy_header_bar_get_type, GType, (), ())
+RUNTIME_IMPORT_FUNCTION(0, HANDY_LIBRARY, hdy_header_bar_set_decoration_layout, void, (void *bar, const gchar *layout), (bar, layout))
 
 /* All methods that we want to overwrite are named orig_, all methods
  * that we just want to call (either directly or indirectrly)
@@ -375,7 +376,6 @@ RUNTIME_IMPORT_FUNCTION(0, HANDY_LIBRARY, hdy_header_bar_set_decoration_layout, 
 #define g_object_set_data                                rtlookup_g_object_set_data
 #define g_type_check_class_cast                          rtlookup_g_type_check_class_cast
 #define g_type_check_instance_is_a                       rtlookup_g_type_check_instance_is_a
-#define g_type_check_instance_cast                       rtlookup_g_type_check_instance_cast
 #define g_object_class_find_property                     rtlookup_g_object_class_find_property
 #define g_object_get_valist                              rtlookup_g_object_get_valist
 #define g_object_get_property                            rtlookup_g_object_get_property
@@ -410,6 +410,14 @@ RUNTIME_IMPORT_FUNCTION(0, HANDY_LIBRARY, hdy_header_bar_set_decoration_layout, 
 #define g_assertion_message_expr                         rtlookup_g_assertion_message_expr
 #define orig_g_function_info_prep_invoker                rtlookup_g_function_info_prep_invoker
 #define hdy_header_bar_set_decoration_layout             rtlookup_hdy_header_bar_set_decoration_layout
+
+GTypeInstance* g_type_check_instance_cast(GTypeInstance *instance, GType iface_type) {
+    return rtlookup_g_type_check_instance_cast(instance, iface_type);
+}
+
+GType hdy_header_bar_get_type() {
+    return rtlookup_hdy_header_bar_get_type();
+}
 
 /* Forwarding of varadic functions is tricky. */
 static void static_g_log(const gchar *log_domain, GLogLevelFlags log_level, const gchar *format, ...)
@@ -1081,7 +1089,7 @@ static void fake_gtk_header_bar_hierarchy_changed (GtkWidget *widget, GtkWidget 
 static gtk_header_bar_hierarchy_changed_t orig_hdy_header_bar_hierarchy_changed = NULL;
 static void fake_hdy_header_bar_hierarchy_changed (GtkWidget *widget, GtkWidget *previous_toplevel)
 {
-    HdyHeaderBar *bar = widget;
+    HdyHeaderBar *bar = HDY_HEADER_BAR (widget);
 
     orig_hdy_header_bar_hierarchy_changed (widget, previous_toplevel);
 
