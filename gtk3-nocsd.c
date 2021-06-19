@@ -306,6 +306,7 @@ RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_type_value_table_peek, GTypeValueT
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_type_check_instance_is_fundamentally_a, gboolean, (GTypeInstance *instance, GType fundamental_type), (instance, fundamental_type))
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_signal_connect_data, gulong, (gpointer instance, const gchar *detailed_signal, GCallback c_handler, gpointer data, GClosureNotify destroy_data, GConnectFlags connect_flags), (instance, detailed_signal, c_handler, data, destroy_data, connect_flags))
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_signal_handlers_disconnect_matched, guint, (gpointer instance, GSignalMatchType mask, guint signal_id, GQuark detail, GClosure *closure, gpointer func, gpointer data), (instance, mask, signal_id, detail, closure, func, data))
+RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_object_get_valist, void, (GObject *object, const gchar *first_property_name, va_list var_args), (object, first_property_name, var_args))
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_object_get_property, void, (GObject *object, const gchar *property_name, GValue *value), (object, property_name, value))
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_value_init, GValue *, (GValue *value, GType g_type), (value, g_type))
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_value_unset, void, (GValue *value), (value))
@@ -363,6 +364,7 @@ RUNTIME_IMPORT_FUNCTION(0, GIREPOSITORY_LIBRARY, g_function_info_prep_invoker, g
 #define g_type_check_instance_is_a                       rtlookup_g_type_check_instance_is_a
 #define g_type_check_instance_cast                       rtlookup_g_type_check_instance_cast
 #define g_object_class_find_property                     rtlookup_g_object_class_find_property
+#define g_object_get_valist                              rtlookup_g_object_get_valist
 #define g_object_get_property                            rtlookup_g_object_get_property
 #ifdef g_object_ref
 #  undef g_object_ref
@@ -811,39 +813,43 @@ extern void g_object_get (gpointer _object, const gchar *first_property_name, ..
      * g_object_get(). */
 
     va_start (var_args, first_property_name);
-    name = first_property_name;
-    while (name) {
-        GValue value = G_VALUE_INIT;
-        GParamSpec *spec = g_object_class_find_property (G_OBJECT_GET_CLASS (object), name);
-        gchar *error;
+    if (are_csd_disabled()) {
+        name = first_property_name;
+        while (name) {
+            GValue value = G_VALUE_INIT;
+            GParamSpec *spec = g_object_class_find_property (G_OBJECT_GET_CLASS (object), name);
+            gchar *error;
 
-        if (!spec)
-            break;
-
-        g_value_init (&value, spec->value_type);
-        g_object_get_property (object, name, &value);
-
-        if (G_UNLIKELY (strcmp (name, "gtk-decoration-layout") == 0)) {
-            gchar **v = va_arg (var_args, gchar **);
-            const gchar *s = g_value_get_string (&value);
-
-            r = _remove_buttons_from_layout (new_layout, s);
-            if (r == 0)
-                s = new_layout;
-            *v = g_strdup (s);
-        } else {
-            G_VALUE_LCOPY (&value, var_args, 0, &error);
-            if (error) {
-                g_warning ("%s: %s", "g_object_get_valist", error);
-                g_free (error);
-                g_value_unset (&value);
+            if (!spec)
                 break;
+
+            g_value_init (&value, spec->value_type);
+            g_object_get_property (object, name, &value);
+
+            if (G_UNLIKELY (strcmp (name, "gtk-decoration-layout") == 0)) {
+                gchar **v = va_arg (var_args, gchar **);
+                const gchar *s = g_value_get_string (&value);
+
+                r = _remove_buttons_from_layout (new_layout, s);
+                if (r == 0)
+                    s = new_layout;
+                *v = g_strdup (s);
+            } else {
+                G_VALUE_LCOPY (&value, var_args, 0, &error);
+                if (error) {
+                    g_warning ("%s: %s", "g_object_get_valist", error);
+                    g_free (error);
+                    g_value_unset (&value);
+                    break;
+                }
             }
+
+            g_value_unset (&value);
+
+            name = va_arg (var_args, gchar *);
         }
-
-        g_value_unset (&value);
-
-        name = va_arg (var_args, gchar *);
+    } else {
+        g_object_get_valist (object, first_property_name, var_args);
     }
     va_end (var_args);
 }
