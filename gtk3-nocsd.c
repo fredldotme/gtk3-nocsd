@@ -834,6 +834,10 @@ extern void g_object_get (gpointer _object, const gchar *first_property_name, ..
                 if (r == 0)
                     s = new_layout;
                 *v = g_strdup (s);
+            } else if (G_UNLIKELY (strcmp (name, "gtk-dialogs-use-header") == 0)) {
+                gboolean *v = va_arg (var_args, gboolean *);
+                // Save dialog will break if this prop has been set to TRUE (see #13)
+                *v = FALSE;
             } else {
                 G_VALUE_LCOPY (&value, var_args, 0, &error);
                 if (error) {
