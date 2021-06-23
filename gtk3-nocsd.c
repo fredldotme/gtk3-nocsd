@@ -312,6 +312,7 @@ RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_value_init, GValue *, (GValue *val
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_value_unset, void, (GValue *value), (value))
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_value_get_string, const gchar *, (const GValue *value), (value))
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_value_get_boolean, gboolean, (const GValue *value), (value))
+RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_type_name, const gchar *, (GType type), (type))
 RUNTIME_IMPORT_FUNCTION(0, GLIB_LIBRARY, g_getenv, gchar *, (const char *name), (name))
 RUNTIME_IMPORT_FUNCTION(0, GLIB_LIBRARY, g_logv, void, (const gchar *log_domain, GLogLevelFlags log_level, const gchar *format, va_list args), (log_domain, log_level, format, args))
 RUNTIME_IMPORT_FUNCTION(0, GLIB_LIBRARY, g_free, void, (gpointer mem), (mem))
@@ -375,6 +376,7 @@ RUNTIME_IMPORT_FUNCTION(0, GIREPOSITORY_LIBRARY, g_function_info_prep_invoker, g
 #define g_value_unset                                    rtlookup_g_value_unset
 #define g_value_get_string                               rtlookup_g_value_get_string
 #define g_value_get_boolean                              rtlookup_g_value_get_boolean
+#define g_type_name                                      rtlookup_g_type_name
 #define orig_g_type_register_static_simple               rtlookup_g_type_register_static_simple
 #define orig_g_type_add_interface_static                 rtlookup_g_type_add_interface_static
 #define orig_g_type_add_instance_private                 rtlookup_g_type_add_instance_private
@@ -667,7 +669,7 @@ extern void gtk_window_set_titlebar (GtkWindow *window, GtkWidget *titlebar) {
             /* Hiding GtkHeaderBar when custom title wasn't set (only for GtkDialog windows) */
             const GtkWidget* custom = gtk_header_bar_get_custom_title(GTK_HEADER_BAR (titlebar));
             const gchar* window_type = G_OBJECT_TYPE_NAME(window);
-            if (custom == NULL && !g_strcmp0(window_type, "GtkDialog")) {
+            if (custom == NULL && !strcmp(window_type, "GtkDialog")) {
                 gtk_widget_hide(GTK_WIDGET (titlebar));
             }
         }
