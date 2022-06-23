@@ -571,6 +571,20 @@ static GtkStyleProvider *get_custom_css_provider ()
       ".background:not(.tiled):not(.maximized) .titlebar headerbar {\n"
       "  border-top-left-radius: 0;\n"
       "  border-top-right-radius: 0;\n"
+      "}\n"
+      "decoration\n"
+      "{\n"
+      "  border-radius: 6px 6px 0 0;\n"
+      "  border-width: 0px;\n"
+      "  box-shadow: none;\n"
+      "  margin: 4px;\n"
+      "}\n"
+      "decoration:backdrop\n"
+      "{\n"
+      "  border-radius: 6px 6px 0 0;\n"
+      "  border-width: 0px;\n"
+      "  box-shadow: none;\n"
+      "  margin: 4px;\n"
       "}\n";
     static int title_skipped = 0;
 
