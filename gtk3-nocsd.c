@@ -577,14 +577,14 @@ static GtkStyleProvider *get_custom_css_provider ()
       "  border-radius: 6px 6px 0 0;\n"
       "  border-width: 0px;\n"
       "  box-shadow: none;\n"
-      "  margin: 4px;\n"
+      "  margin: 0px;\n"
       "}\n"
       "decoration:backdrop\n"
       "{\n"
       "  border-radius: 6px 6px 0 0;\n"
       "  border-width: 0px;\n"
       "  box-shadow: none;\n"
-      "  margin: 4px;\n"
+      "  margin: 0px;\n"
       "}\n";
     static int title_skipped = 0;
 
