@@ -317,7 +317,6 @@ RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_type_add_interface_static, void, (
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_type_add_instance_private, gint, (GType class_type, gsize private_size), (class_type, private_size))
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_type_instance_get_private, gpointer, (GTypeInstance *instance, GType private_type), (instance, private_type))
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_type_value_table_peek, GTypeValueTable *, (GType type), (type))
-RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_type_check_instance_is_fundamentally_a, gboolean, (GTypeInstance *instance, GType fundamental_type), (instance, fundamental_type))
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_signal_connect_data, gulong, (gpointer instance, const gchar *detailed_signal, GCallback c_handler, gpointer data, GClosureNotify destroy_data, GConnectFlags connect_flags), (instance, detailed_signal, c_handler, data, destroy_data, connect_flags))
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_signal_handlers_disconnect_matched, guint, (gpointer instance, GSignalMatchType mask, guint signal_id, GQuark detail, GClosure *closure, gpointer func, gpointer data), (instance, mask, signal_id, detail, closure, func, data))
 RUNTIME_IMPORT_FUNCTION(0, GOBJECT_LIBRARY, g_object_get_valist, void, (GObject *object, const gchar *first_property_name, va_list var_args), (object, first_property_name, var_args))
@@ -337,6 +336,8 @@ RUNTIME_IMPORT_FUNCTION(0, GLIB_LIBRARY, g_strlcpy, gsize, (gchar *dest, const g
 RUNTIME_IMPORT_FUNCTION(0, GLIB_LIBRARY, g_strsplit, gchar **, (const gchar *string, const gchar *delimiter, gint max_tokens), (string, delimiter, max_tokens))
 RUNTIME_IMPORT_FUNCTION(0, GLIB_LIBRARY, g_assertion_message_expr, void, (const char *domain, const char *file, int line, const char *func, const char *expr), (domain, file, line, func, expr))
 RUNTIME_IMPORT_FUNCTION(0, GIREPOSITORY_LIBRARY, g_function_info_prep_invoker, gboolean, (GIFunctionInfo *info, GIFunctionInvoker *invoker, GError **error), (info, invoker, error))
+
+RUNTIME_IMPORT_FUNCTION_FALLBACK(0, GOBJECT_LIBRARY, g_type_check_instance_is_fundamentally_a, gboolean, (GTypeInstance *instance, GType fundamental_type), (instance, fundamental_type), return rtlookup_g_type_check_instance_is_a (instance, fundamental_type))
 
 /* All methods that we want to overwrite are named orig_, all methods
  * that we just want to call (either directly or indirectrly)
