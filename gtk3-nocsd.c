@@ -832,9 +832,6 @@ extern void g_object_get (gpointer _object, const gchar *first_property_name, ..
     char new_layout[256];
     int r;
 
-    if (!G_IS_OBJECT (_object))
-        return;
-
     /* This is a really, really awful hack, because of the variable arguments
      * that g_object_get takes. At least Gtk+3 defines g_object_get_valist,
      * so we can default back to the valist original implementation if we
@@ -845,7 +842,11 @@ extern void g_object_get (gpointer _object, const gchar *first_property_name, ..
      * g_object_get(). */
 
     va_start (var_args, first_property_name);
-    if (are_csd_disabled()) {
+
+    if (object != NULL
+        && g_type_check_instance_is_fundamentally_a (object, G_TYPE_OBJECT)
+        && is_compatible_gtk_version()
+        && are_csd_disabled()) {
         name = first_property_name;
         while (name) {
             GValue value = G_VALUE_INIT;
