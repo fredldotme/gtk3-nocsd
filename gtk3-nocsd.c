@@ -25,6 +25,7 @@
 #include <link.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <pthread.h>
@@ -241,6 +242,12 @@ try_gtk2_version:
     return dlsym(handle, symbol);
 }
 
+__attribute__((noreturn)) static void failed_to_find (const char *name)
+{
+    fprintf (stderr, "gtk3-nocsd: Failed to find required symbol: %s\n", name);
+    abort ();
+}
+
 /* If a binary is compiled with ELF flag NOW (corresponding to RTLD_NOW),
  * but is not linked against gtk, if we use symbols from gtk the binary
  * they will fail to load. But we can't link this library against gtk3,
@@ -249,13 +256,20 @@ try_gtk2_version:
  * every function, not just those that we override, at runtime. */
 #define HIDDEN_NAME2(a,b)   a ## b
 #define NAME2(a,b)          HIDDEN_NAME2(a,b)
-#define RUNTIME_IMPORT_FUNCTION(try_gtk2, library, function_name, return_type, arg_def_list, arg_use_list) \
+#define RUNTIME_IMPORT_FUNCTION_FALLBACK(try_gtk2, library, function_name, return_type, arg_def_list, arg_use_list, fallback) \
     static return_type NAME2(rtlookup_, function_name) arg_def_list { \
+        static const char *orig_func_name = #function_name; \
         static return_type (*orig_func) arg_def_list = NULL;\
         if (!orig_func) \
-            orig_func = find_orig_function(try_gtk2, library, #function_name); \
-        return orig_func arg_use_list; \
+            orig_func = find_orig_function(try_gtk2, library, orig_func_name); \
+        if (orig_func) \
+            return orig_func arg_use_list; \
+        else \
+            fallback; \
     }
+
+#define RUNTIME_IMPORT_FUNCTION(try_gtk2, library, function_name, return_type, arg_def_list, arg_use_list) \
+    RUNTIME_IMPORT_FUNCTION_FALLBACK(try_gtk2, library, function_name, return_type, arg_def_list, arg_use_list, failed_to_find (orig_func_name))
 
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_css_provider_new, GtkCssProvider *, (), ())
 RUNTIME_IMPORT_FUNCTION(0, GTK_LIBRARY, gtk_css_provider_load_from_data, void, (GtkCssProvider *provider, const gchar *data, gssize length, GError **error), (provider, data, length, error))
